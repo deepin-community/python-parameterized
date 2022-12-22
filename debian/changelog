@@ -1,0 +1,70 @@
+python-parameterized (0.8.1-1) unstable; urgency=medium
+
+  [ Debian Janitor ]
+  * Set upstream metadata fields: Bug-Database, Bug-Submit.
+  * Update standards version to 4.5.0, no changes needed.
+
+  [ Ondřej Nový ]
+  * d/control: Update Maintainer field with new Debian Python Team
+    contact address.
+  * d/control: Update Vcs-* fields with new Debian Python Team Salsa
+    layout.
+
+  [ Picca Frédéric-Emmanuel ]
+  * New upstream version 0.8.1
+  * Bump debhelper from old 12 to 13.
+  * Set upstream metadata fields: Repository, Repository-Browse.
+  * Update standards version to 4.5.1, no changes needed.
+  * d/p/Remove-unicode-docstring-test.patch: Refreshed
+  * d/p/fix-test-for-python3.8.patch: Deleted, applyed upstream
+  * d/p/skip-failing-test.patch: refreshed
+
+ -- Picca Frédéric-Emmanuel <picca@debian.org>  Mon, 30 Aug 2021 13:52:26 +0200
+
+python-parameterized (0.7.0-2) unstable; urgency=medium
+
+  [Emmanuel Arias]
+  * Team upload
+  * Apply patch to fix test for python3.8. (Closes: #944158)
+    - Patch by Matthias Klose.
+
+  [ Ondřej Nový ]
+  * Bump Standards-Version to 4.4.1.
+
+  [ Sandro Tosi ]
+  * Drop python2 support; Closes: #937998
+
+ -- Sandro Tosi <morph@debian.org>  Wed, 06 Nov 2019 09:11:35 -0500
+
+python-parameterized (0.7.0-1) unstable; urgency=medium
+
+  * Team upload.
+  * New upstream release.
+  * Rebase patches.
+  * d/control: Set Vcs-* to salsa.debian.org
+  * Use debhelper-compat instead of debian/compat.
+  * Add python{,3}-mock to B-D.
+  * d/tests: Add python{,3}-mock to depends.
+  * Skip failing tests in Python 2.
+  * d/rules: Remove useless get-orig-source target.
+  * Bump debhelper compat level to 12.
+  * Bump standards version to 4.4.0.
+
+ -- Ondřej Nový <onovy@debian.org>  Thu, 19 Sep 2019 10:26:34 +0200
+
+python-parameterized (0.6.1-2) unstable; urgency=medium
+
+  * Fix debci failures due to a buggy test
+    - New patch Remove-unicode-docstring-test.patch
+  * Fixup the Vcs-Browser URI
+  * Remove superfluous nocheck guards
+  * Add recommended get-orig-source target
+  * Bump the standards version to 4.1.1
+
+ -- Ghislain Antony Vaillant <ghisvail@gmail.com>  Sat, 21 Oct 2017 21:51:43 +0100
+
+python-parameterized (0.6.1-1) unstable; urgency=low
+
+  * Initial release. (Closes: #869976)
+
+ -- Ghislain Antony Vaillant <ghisvail@gmail.com>  Fri, 28 Jul 2017 11:56:31 +0100

@@ -1,0 +1,25 @@
+From: Ghislain Antony Vaillant <ghisvail@gmail.com>
+Date: Sat, 21 Oct 2017 21:44:47 +0100
+Subject: Remove unicode docstring test
+
+Bug: https://github.com/wolever/parameterized/issues/44
+---
+ parameterized/test.py | 5 -----
+ 1 file changed, 5 deletions(-)
+
+diff --git a/parameterized/test.py b/parameterized/test.py
+index f98d865..d3aa419 100644
+--- a/parameterized/test.py
++++ b/parameterized/test.py
+@@ -287,11 +287,6 @@ class TestParameterizedExpandDocstring(TestCase):
+             "        More" %(foo, )
+         )
+ 
+-    @parameterized.expand([param("foo")])
+-    def test_unicode_docstring(self, foo):
+-        u"""Döcumentation."""
+-        self._assert_docstring(u"Döcumentation [with foo=%r]." %(foo, ))
+-
+     @parameterized.expand([param("foo", )])
+     def test_default_values_get_correct_value(self, foo, bar=12):
+         """Documentation"""
