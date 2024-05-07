@@ -1,2 +1,5 @@
-Remove-unicode-docstring-test.patch
-skip-failing-test.patch
+remove-mock.patch
+drop-TestUnicodeDocString.patch
+#fedora_pytest4.patch
+assertRaisesRegex.patch
+disable-test.patch

@@ -1,0 +1,18 @@
+--- a/parameterized/test.py
++++ b/parameterized/test.py
+@@ -662,15 +662,6 @@
+         ))
+ 
+ 
+-class TestUnicodeDocstring(object):
+-    @parameterized.expand([
+-        'value1',
+-        'vålüé¡'
+-    ])
+-    def test_with_docstring(self, param):
+-        """ Это док-стринг, содержащий не-ascii символы """
+-        pass
+-
+ if sys.version_info.major == 3 and sys.version_info.minor >= 8:
+     from unittest import IsolatedAsyncioTestCase
+ 

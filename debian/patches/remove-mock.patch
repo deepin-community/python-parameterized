@@ -1,0 +1,16 @@
+Description: Allow running tests without mock
+Author: Alexandre Detiste <tchet@debian.org>
+Last-Update: 2024-02-21
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/parameterized/test.py
++++ b/parameterized/test.py
+@@ -2,7 +2,7 @@
+ 
+ import inspect
+ import sys
+-import mock
++from unittest import mock
+ from functools import wraps
+ from unittest import TestCase
+ try:

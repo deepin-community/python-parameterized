@@ -3,17 +3,13 @@ Test-Command: set -e
  ; do cd "$AUTOPKGTEST_TMP"
  ; echo "Testing with $py (unittest):"
  ; $py -m unittest -v parameterized.test
- ; echo "Testing with $py (nose):"
- ; $py -m nose -v parameterized.test
  ; echo "Testing with $py (nose2):"
  ; $py -m nose2 -v parameterized.test
  ; echo "Testing with $py (pytest):"
  ; $py -m pytest -v --pyargs parameterized.test
  ; done
 Depends: python3-all,
-         python3-mock,
-         python3-nose,
-         python3-nose2,
+	 python3-nose2,
          python3-parameterized,
          python3-pytest
 Restrictions: allow-stderr

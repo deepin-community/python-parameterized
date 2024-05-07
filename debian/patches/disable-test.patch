@@ -1,0 +1,13 @@
+--- a/parameterized/test.py
++++ b/parameterized/test.py
+@@ -484,10 +484,6 @@
+         raise AssertionError("Expected exception not raised")
+ 
+ 
+-def tearDownModule():
+-    missing = sorted(list(missing_tests))
+-    assert_equal(missing, [])
+-
+ def test_old_style_classes():
+     if PY3:
+         raise SkipTest("Py3 doesn't have old-style classes")
