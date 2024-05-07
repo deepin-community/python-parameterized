@@ -1,18 +1,47 @@
 # coding=utf-8
 
 import inspect
+import sys
 import mock
+from functools import wraps
 from unittest import TestCase
-from nose.tools import assert_equal, assert_raises
+try:
+    from nose.tools import assert_equal, assert_raises
+except ImportError:
+    def assert_equal(*args, **kwds):
+        return TestCase().assertEqual(*args, **kwds)
+    def assert_raises(*args, **kwds):
+        return TestCase().assertRaises(*args, **kwds)
 
 from .parameterized import (
     PY3, PY2, parameterized, param, parameterized_argument_value_pairs,
     short_repr, detect_runner, parameterized_class, SkipTest,
 )
 
+
 def assert_contains(haystack, needle):
     if needle not in haystack:
         raise AssertionError("%r not in %r" %(needle, haystack))
+
+
+def assert_raises_regexp_decorator(expected_exception, expected_regexp):
+    """
+    Assert that a wrapped `unittest.TestCase` method raises an error matching the given type and message regex.
+
+    :param expected_exception: Exception class expected to be raised.
+    :param expected_regexp: Regexp (re pattern object or string) expected to be found in error message.
+    """
+
+    def func_decorator(func):
+        @wraps(func)
+        def wrapper(self, *args, **kwargs):
+            with self.assertRaisesRegexp(expected_exception, expected_regexp):
+                func(self, *args, **kwargs)
+
+        return wrapper
+
+    return func_decorator
+
 
 runner = detect_runner()
 UNITTEST = runner.startswith("unittest")
@@ -30,6 +59,7 @@ SKIP_FLAGS = {
 
 missing_tests = set()
 
+
 def expect(skip, tests=None):
     if tests is None:
         tests = skip
@@ -38,18 +68,44 @@ def expect(skip, tests=None):
         return
     missing_tests.update(tests)
 
+
+def expect_exception_matching_regex(tests, expected_exception, expected_regexp):
+    """
+    Assert that the given `unittest.TestCase` tests raise an error matching the given type and message regex.
+
+    :param tests: A single test name or list of test names.
+    :param expected_exception: Exception class expected to be raised.
+    :param expected_regexp: Regexp (re pattern object or string) expected to be found in error message.
+    """
+    if not isinstance(tests, list):
+        tests = [tests]
+
+    decorator = assert_raises_regexp_decorator(expected_exception, expected_regexp)
+    frame_locals = inspect.currentframe().f_back.f_locals
+
+    for test in tests:
+        if test in frame_locals:
+            test_method = frame_locals[test]
+            decorated_test_method = decorator(test_method)
+            frame_locals[test] = decorated_test_method
+
+
 test_params = [
     (42, ),
     "foo0",
+    b"bar",
+    123,
     param("foo1"),
     param("foo2", bar=42),
 ]
 
 expect("standalone", [
+    "test_naked_function(42, bar=None)",
     "test_naked_function('foo0', bar=None)",
+    "test_naked_function(b'bar', bar=None)",
+    "test_naked_function(123, bar=None)",
     "test_naked_function('foo1', bar=None)",
     "test_naked_function('foo2', bar=42)",
-    "test_naked_function(42, bar=None)",
 ])
 
 @parameterized(test_params)
@@ -59,10 +115,12 @@ def test_naked_function(foo, bar=None):
 
 class TestParameterized(object):
     expect("generator", [
+        "test_instance_method(42, bar=None)",
+        "test_instance_method(b'bar', bar=None)",
+        "test_instance_method(123, bar=None)",
         "test_instance_method('foo0', bar=None)",
         "test_instance_method('foo1', bar=None)",
         "test_instance_method('foo2', bar=42)",
-        "test_instance_method(42, bar=None)",
     ])
 
     @parameterized(test_params)
@@ -97,7 +155,8 @@ if not PYTEST:
 
 def custom_naming_func(custom_tag):
     def custom_naming_func(testcase_func, param_num, param):
-        return testcase_func.__name__ + ('_%s_name_' % custom_tag) + str(param.args[0])
+        arg = param.args[0]
+        return testcase_func.__name__ + ('_%s_name_' % custom_tag) + parameterized.to_safe_name(arg)
 
     return custom_naming_func
 
@@ -181,6 +240,31 @@ class TestParameterizedExpandWithNoMockPatchForClass(TestCase):
                              (foo, bar, mock_umask._mock_name,
                               mock_fdopen._mock_name))
 
+    expect([
+        "test_patch_decorator_over_test_with_error('foo_this', 'umask')",
+        "test_patch_decorator_over_test_with_error('foo_that', 'umask')",
+    ])
+
+    @parameterized.expand([
+        ("foo_this",),
+        ("foo_that",),
+    ])
+    @mock.patch("os.umask")
+    def test_patch_decorator_over_test_with_error(self, foo, mock_umask):
+        missing_tests.remove(
+            "test_patch_decorator_over_test_with_error({!r}, {!r})".format(foo, mock_umask._mock_name)
+        )
+        raise ValueError("This error should have been caught")
+
+    expect_exception_matching_regex(
+        tests=[
+            "test_patch_decorator_over_test_with_error_0_foo_this",
+            "test_patch_decorator_over_test_with_error_1_foo_that",
+        ],
+        expected_exception=ValueError,
+        expected_regexp="^This error should have been caught$",
+    )
+
 
 class TestParameterizedExpandWithNoMockPatchForClassNoExpand(object):
     expect("generator", [
@@ -207,13 +291,53 @@ def test_mock_patch_standalone_function(foo, mock_umask):
         )
     )
 
+@mock.patch.multiple("os", umask=mock.DEFAULT)
+class TestParameterizedExpandWithMockPatchMultiple(TestCase):
+    expect([
+        "test_mock_patch_multiple_expand_on_method(42, 'umask', 'getpid')",
+        "test_mock_patch_multiple_expand_on_class(16, 'umask')",
+    ])
+
+    @parameterized.expand([(42, )])
+    @mock.patch.multiple("os", getpid=mock.DEFAULT)
+    def test_mock_patch_multiple_expand_on_method(self, param, umask, getpid):
+        missing_tests.remove(
+            "test_mock_patch_multiple_expand_on_method(%r, %r, %r)" %(
+                param, umask._mock_name, getpid._mock_name
+            )
+        )
+
+    @parameterized.expand([(16, )])
+    def test_mock_patch_multiple_expand_on_class(self, param, umask):
+        missing_tests.remove(
+            "test_mock_patch_multiple_expand_on_class(%r, %r)" %(
+                param, umask._mock_name,
+            )
+        )
+
+expect("standalone", [
+    "test_mock_patch_multiple_standalone(42, 'umask', 'getpid')",
+])
+
+@parameterized([(42, )])
+@mock.patch.multiple("os", umask=mock.DEFAULT, getpid=mock.DEFAULT)
+def test_mock_patch_multiple_standalone(param, umask, getpid):
+    missing_tests.remove(
+        "test_mock_patch_multiple_standalone(%r, %r, %r)" %(
+            param, umask._mock_name, getpid._mock_name
+        )
+    )
+
+
 
 class TestParamerizedOnTestCase(TestCase):
     expect([
+        "test_on_TestCase(42, bar=None)",
+        "test_on_TestCase(b'bar', bar=None)",
+        "test_on_TestCase(123, bar=None)",
         "test_on_TestCase('foo0', bar=None)",
         "test_on_TestCase('foo1', bar=None)",
         "test_on_TestCase('foo2', bar=42)",
-        "test_on_TestCase(42, bar=None)",
     ])
 
     @parameterized.expand(test_params)
@@ -222,6 +346,8 @@ class TestParamerizedOnTestCase(TestCase):
 
     expect([
         "test_on_TestCase2_custom_name_42(42, bar=None)",
+        "test_on_TestCase2_custom_name_b_bar_(b'bar', bar=None)",
+        "test_on_TestCase2_custom_name_123(123, bar=None)",
         "test_on_TestCase2_custom_name_foo0('foo0', bar=None)",
         "test_on_TestCase2_custom_name_foo1('foo1', bar=None)",
         "test_on_TestCase2_custom_name_foo2('foo2', bar=42)",
@@ -234,7 +360,7 @@ class TestParamerizedOnTestCase(TestCase):
         frame = stack[1]
         frame_locals = frame[0].f_locals
         nose_test_method_name = frame_locals['a'][0]._testMethodName
-        expected_name = "test_on_TestCase2_custom_name_" + str(foo)
+        expected_name = "test_on_TestCase2_custom_name_" + parameterized.to_safe_name(foo)
         assert_equal(nose_test_method_name, expected_name,
                      "Test Method name '%s' did not get customized to expected: '%s'" %
                      (nose_test_method_name, expected_name))
@@ -313,14 +439,6 @@ def test_warns_when_using_parameterized_with_TestCase():
                 pass
     except Exception as e:
         assert_contains(str(e), "parameterized.expand")
-    else:
-        raise AssertionError("Expected exception not raised")
-
-def test_helpful_error_on_invalid_parameters():
-    try:
-        parameterized([1432141234243])(lambda: None)
-    except Exception as e:
-        assert_contains(str(e), "Parameters must be tuples")
     else:
         raise AssertionError("Expected exception not raised")
 
@@ -552,3 +670,26 @@ class TestUnicodeDocstring(object):
     def test_with_docstring(self, param):
         """ Это док-стринг, содержащий не-ascii символы """
         pass
+
+if sys.version_info.major == 3 and sys.version_info.minor >= 8:
+    from unittest import IsolatedAsyncioTestCase
+
+    class TestAsyncParameterizedExpandWithNoMockPatchForClass(IsolatedAsyncioTestCase):
+        expect([
+            "test_one_async_function('foo1')",
+            "test_one_async_function('foo0')",
+            "test_one_async_function(42)",
+            "test_one_async_function_patch_decorator('foo1', 'umask')",
+            "test_one_async_function_patch_decorator('foo0', 'umask')",
+            "test_one_async_function_patch_decorator(42, 'umask')",
+        ])
+
+        @parameterized.expand([(42,), "foo0", param("foo1")])
+        async def test_one_async_function(self, foo):
+            missing_tests.remove("test_one_async_function(%r)" % (foo, ))
+
+        @parameterized.expand([(42,), "foo0", param("foo1")])
+        @mock.patch("os.umask")
+        async def test_one_async_function_patch_decorator(self, foo, mock_umask):
+            missing_tests.remove("test_one_async_function_patch_decorator(%r, %r)" %
+                                 (foo, mock_umask._mock_name))

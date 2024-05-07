@@ -1,3 +1,61 @@
+python-parameterized (0.9.0-1) unstable; urgency=medium
+
+  * Team upload.
+  * New upstream version 0.9.0
+  * drop python 2 patch
+  * refresh existing patches, add a new one for python 3.12
+  * patch-out python3-mock
+  * add dependency on pybuild-plugin-pyproject
+
+ -- Alexandre Detiste <tchet@debian.org>  Wed, 13 Mar 2024 22:54:38 +0100
+
+python-parameterized (0.8.1-6) unstable; urgency=medium
+
+  * Team upload.
+  * d/patches:
+        - add patch to remove nosetest (Closes: #1018548)
+        - Refresh patches
+  * d/tests/control:
+        - do not run tests with nose.
+  * d/control:
+        - remove python3-nose from Build-Deps
+        - Bump Standards-Ver to 4.6.1, no changes needed
+
+ -- Mohammed Bilal <mdbilal@disroot.org>  Sun, 04 Dec 2022 02:20:08 +0000
+
+python-parameterized (0.8.1-5) unstable; urgency=medium
+
+  [ Debian Janitor ]
+  * Remove constraints unnecessary since buster (oldstable):
+    + Build-Depends: Drop versioned constraint on dpkg-dev.
+
+ -- Jelmer Vernooĳ <jelmer@debian.org>  Sun, 16 Oct 2022 18:05:19 +0100
+
+python-parameterized (0.8.1-4) unstable; urgency=medium
+
+  * debian/patches/fedora_pytest4.patch
+    - import Fedora's patch to support pytest 4+, part of upstream PR #116;
+      Closes: #1014487
+
+ -- Sandro Tosi <morph@debian.org>  Tue, 12 Jul 2022 23:41:38 -0400
+
+python-parameterized (0.8.1-3) unstable; urgency=medium
+
+  [ Paul Gevers ]
+  * debian/patches/drop-TestUnicodeDocString.patch
+    - remove TestUnicodeDocstring, which is failing when using pytest;
+      Closes: #995356
+
+ -- Sandro Tosi <morph@debian.org>  Mon, 07 Feb 2022 00:10:16 -0500
+
+python-parameterized (0.8.1-2) unstable; urgency=medium
+
+  [ Paul Gevers ]
+  * Drop autopkgtest for now as it fails and this is blocking migration
+    (See: #995356)
+
+ -- Sandro Tosi <morph@debian.org>  Tue, 25 Jan 2022 23:22:50 -0500
+
 python-parameterized (0.8.1-1) unstable; urgency=medium
 
   [ Debian Janitor ]
